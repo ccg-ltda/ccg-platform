@@ -46,7 +46,7 @@ class UserController extends Controller
 
         $user->assignRole($request->role);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('users.index');
     }
 
     public function update(Request $request, User $user)
@@ -64,13 +64,17 @@ class UserController extends Controller
 
         $user->syncRoles($request->role);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('users.index');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        if ($request->user()->is($user)) {
+            return redirect()->route('users.index');
+        }
+
         $user->delete();
 
-        return redirect()->route('dashboard');
+        return redirect()->route('users.index');
     }
 }

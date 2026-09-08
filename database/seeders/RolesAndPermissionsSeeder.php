@@ -17,19 +17,27 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::create(['name' => 'manage-users']);
-        Permission::create(['name' => 'manage-settings']);
-        Permission::create(['name' => 'view-dashboard']);
+        Permission::firstOrCreate(['name' => 'manage-users']);
+        Permission::firstOrCreate(['name' => 'manage-settings']);
+        Permission::firstOrCreate(['name' => 'view-dashboard']);
+        Permission::firstOrCreate(['name' => 'view-users']);
 
-        Role::create(['name' => 'Admin']);
-        Role::create(['name' => 'Supervisor']);
-        Role::create(['name' => 'Agente']);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $supervisorRole = Role::firstOrCreate(['name' => 'Supervisor']);
+        Role::firstOrCreate(['name' => 'Agente']);
 
-        $admin = User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password123'),
-        ]);
+        $supervisorRole->syncPermissions(['view-dashboard', 'view-users']);
+
+        $adminRole = Role::firstOrCreate(['name' => 'Admin']);
+        $adminRole->syncPermissions(Permission::all());
+
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password123'),
+            ],
+        );
         $admin->assignRole('Admin');
     }
 }

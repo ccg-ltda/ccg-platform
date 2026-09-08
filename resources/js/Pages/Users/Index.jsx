@@ -1,9 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import BackButton from '@/Components/BackButton';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Index({ users, roles }) {
+    const { auth } = usePage().props;
+    const canManageUsers = (auth?.user?.permissions || []).includes('manage-users');
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -74,12 +76,14 @@ export default function Index({ users, roles }) {
                     </div>
                     <div className="flex items-center gap-3">
                         <BackButton href="/dashboard" />
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                        >
-                            + Nuevo Usuario
-                        </button>
+                        {canManageUsers && (
+                            <button
+                                onClick={() => setShowModal(true)}
+                                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                            >
+                                + Nuevo Usuario
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -100,9 +104,11 @@ export default function Index({ users, roles }) {
                                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                                     Fecha Creación
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Acciones
-                                </th>
+                                {canManageUsers && (
+                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                        Acciones
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
@@ -123,18 +129,22 @@ export default function Index({ users, roles }) {
                                         {user.created_at}
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                        <button
-                                            onClick={() => openEdit(user)}
-                                            className="me-4 text-indigo-600 hover:text-indigo-900"
-                                        >
-                                            Editar
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(user)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Eliminar
-                                        </button>
+                                        {canManageUsers && (
+                                            <>
+                                                <button
+                                                    onClick={() => openEdit(user)}
+                                                    className="me-4 text-indigo-600 hover:text-indigo-900"
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(user)}
+                                                    className="text-red-600 hover:text-red-900"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

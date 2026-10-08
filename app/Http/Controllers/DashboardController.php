@@ -16,6 +16,13 @@ class DashboardController extends Controller
                 'users' => User::count(),
                 'roles' => Role::count(),
                 'permissions' => Permission::count(),
+                'pendingUsers' => User::where('status', 'pendiente')
+                    ->where('id', '!=', auth()->id())
+                    ->where('operacion', '!=', 'superadmin')
+                    ->whereDoesntHave('roles', function ($query) {
+                        $query->where('name', 'superadmin');
+                    })
+                    ->get(['id', 'name', 'username', 'email', 'phone', 'operacion']),
             ],
         ]);
     }

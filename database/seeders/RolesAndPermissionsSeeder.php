@@ -22,22 +22,63 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'view-dashboard']);
         Permission::firstOrCreate(['name' => 'view-users']);
 
-        Role::firstOrCreate(['name' => 'Admin']);
-        $supervisorRole = Role::firstOrCreate(['name' => 'Supervisor']);
-        Role::firstOrCreate(['name' => 'Agente']);
+        $superadminRole = Role::firstOrCreate(['name' => 'superadmin']);
+        $superadminRole->syncPermissions(Permission::all());
 
-        $supervisorRole->syncPermissions(['view-dashboard', 'view-users']);
-
-        $adminRole = Role::firstOrCreate(['name' => 'Admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $adminRole->syncPermissions(Permission::all());
 
-        $admin = User::firstOrCreate(
+        Role::firstOrCreate(['name' => 'cliente']);
+
+        User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin User',
-                'password' => bcrypt('password123'),
+                'username' => 'adminuser',
+                'phone' => '3007776655',
+                'operacion' => 'Sede Sur',
+                'status' => 'aprobado',
+                'password' => bcrypt('password'),
             ],
         );
-        $admin->assignRole('Admin');
+
+        $kevin = User::firstOrCreate(
+            ['email' => 'kevin@gmail.com'],
+            [
+                'name' => 'Kevin',
+                'username' => 'kevin',
+                'phone' => '3009876543',
+                'operacion' => 'superadmin',
+                'status' => 'aprobado',
+                'password' => bcrypt('123456789'),
+            ],
+        );
+        $kevin->syncRoles(['superadmin']);
+
+        $lola = User::updateOrCreate(
+            ['email' => 'lola@gmail.com'],
+            [
+                'name' => 'Lola',
+                'username' => 'lola',
+                'phone' => '3008889900',
+                'operacion' => 'Sede Américas',
+                'status' => 'aprobado',
+                'password' => bcrypt('123456789'),
+            ],
+        );
+        $lola->assignRole('admin');
+
+        $palo = User::updateOrCreate(
+            ['email' => 'palo@gmail.com'],
+            [
+                'name' => 'Palo',
+                'username' => 'palo',
+                'phone' => '3001112233',
+                'operacion' => 'Sede Norte',
+                'status' => 'aprobado',
+                'password' => bcrypt('123456789'),
+            ],
+        );
+        $palo->assignRole('cliente');
     }
 }

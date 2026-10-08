@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +30,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
+            'operacion' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -42,14 +45,50 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if ($this->has('login') && !$this->has('email')) {
+            $this->merge(['email' => $this->input('login')]);
+        }
+
+        $user = User::where('email', $this->email)
+            ->orWhere('username', $this->email)
+            ->orWhere('phone', $this->email)
+            ->first();
+
+        if (! $user || ! Hash::check($this->password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+                'login' => trans('auth.failed'),
             ]);
         }
 
+        // Validar coincidencia de operación para TODOS los usuarios
+        $inputOperacion = mb_strtolower(trim($this->operacion ?? ''));
+        $userOperacion  = mb_strtolower(trim($user->operacion ?? ''));
+
+        $isSuperadmin = $user->is_superadmin || $user->hasRole('superadmin');
+
+        if ($isSuperadmin) {
+            if (strtolower(trim($this->operacion ?? '')) !== 'superadmin') {
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'operacion' => __('Organización no válida para el rol Superadmin.'),
+                ]);
+            }
+        } else {
+            if ($inputOperacion !== $userOperacion) {
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'email' => 'La Organización seleccionada no corresponde a su usuario.',
+                    'operacion' => 'La Organización seleccionada no corresponde a su usuario.',
+                ]);
+            }
+        }
+
+        Auth::login($user, $this->boolean('remember'));
         RateLimiter::clear($this->throttleKey());
     }
 
@@ -81,6 +120,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

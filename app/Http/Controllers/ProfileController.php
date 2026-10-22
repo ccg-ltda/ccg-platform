@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Quotation;
+use App\Models\Reservation;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +16,35 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    /**
+     * Display the authenticated user's profile.
+     */
+    public function show(Request $request): Response
+    {
+        $user = $request->user()->load(['roles', 'permissions', 'company']);
+
+        return Inertia::render('Profile/Show', [
+            'user' => $user,
+            'role' => $user->roles->pluck('name')->first() ?? 'cliente',
+            'metrics' => [
+                'requests' => Reservation::where('user_id', $user->id)->count(),
+                'quotations' => Quotation::where('user_id', $user->id)->count(),
+                'deals' => $user->deals()->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Display another user's profile (read-only).
+     */
+    public function showVisitor(User $user): Response
+    {
+        return Inertia::render('Profile/Visitor', [
+            'profileUser' => $user->only(['id', 'name', 'email', 'created_at']),
+            'isOwnProfile' => auth()->id() === $user->id,
+        ]);
+    }
+
     /**
      * Display the user's profile form.
      */

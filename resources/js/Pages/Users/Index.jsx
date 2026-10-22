@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import BackButton from '@/Components/BackButton';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Index({ users, roles, companies = [] }) {
@@ -168,7 +168,12 @@ export default function Index({ users, roles, companies = [] }) {
                             {filteredUsers.map((user) => (
                                 <tr key={user.id} className="hover:bg-slate-50">
                                     <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-900">
-                                        {user.name}
+                                        <Link
+                                            href={route('profile.visitor', user.id)}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold text-sm text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition"
+                                        >
+                                            {user.name}
+                                        </Link>
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
                                         {user.username || '-'}

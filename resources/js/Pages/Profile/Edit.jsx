@@ -21,7 +21,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                     <div className="flex justify-start">
                         <BackButton href="/dashboard" />
                     </div>
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
@@ -29,11 +29,11 @@ export default function Edit({ mustVerifyEmail, status }) {
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                         <DeleteUserForm className="max-w-xl" />
                     </div>
                 </div>

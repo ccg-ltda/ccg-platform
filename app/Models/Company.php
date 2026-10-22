@@ -14,10 +14,23 @@ class Company extends Model
         'project',
         'activity',
         'status',
+        'plan_type',
+        'subscription_status',
+        'subscription_expires_at',
     ];
 
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class);
+    }
+
+    public function deals()
+    {
+        return $this->hasMany(Deal::class);
     }
 }

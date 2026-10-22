@@ -18,24 +18,9 @@ class CompanyController extends Controller
         }
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): RedirectResponse
     {
-        $this->ensureSuperAdmin();
-
-        $companies = Company::latest()->get();
-        $totalCompanies = Company::count();
-        $activeCompanies = Company::where('status', 'activo')->count();
-        $linkedUsers = \App\Models\User::whereNotNull('company_id')->count();
-
-        return Inertia::render('Companies/Index', [
-            'companies' => $companies,
-            'totalCompanies' => $totalCompanies,
-            'activeCompanies' => $activeCompanies,
-            'linkedUsers' => $linkedUsers,
-            'auth' => [
-                'user' => auth()->user(),
-            ],
-        ]);
+        return redirect()->route('settings.index', array_merge(['tab' => 'companies'], $request->all()));
     }
 
     public function store(Request $request): RedirectResponse
@@ -51,7 +36,7 @@ class CompanyController extends Controller
 
         Company::create($validated);
 
-        return redirect()->route('companies.index');
+        return redirect()->route('settings.index', ['tab' => 'companies']);
     }
 
     public function update(Request $request, Company $company): RedirectResponse
@@ -67,7 +52,7 @@ class CompanyController extends Controller
 
         $company->update($validated);
 
-        return redirect()->route('companies.index');
+        return redirect()->route('settings.index', ['tab' => 'companies']);
     }
 
     public function toggleStatus(Company $company): RedirectResponse
@@ -77,7 +62,7 @@ class CompanyController extends Controller
         $newStatus = $company->status === 'activo' ? 'inactivo' : 'activo';
         $company->update(['status' => $newStatus]);
 
-        return redirect()->route('companies.index');
+        return redirect()->route('settings.index', ['tab' => 'companies']);
     }
 
     public function destroy(Company $company): RedirectResponse
@@ -86,7 +71,7 @@ class CompanyController extends Controller
 
         $company->delete();
 
-        return redirect()->route('companies.index');
+        return redirect()->route('settings.index', ['tab' => 'companies']);
     }
 
     public function switchActiveCompany(Request $request): RedirectResponse

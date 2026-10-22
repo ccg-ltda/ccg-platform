@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { UserCheck, Shield, Users, User, Edit2, Trash2, X, Check, Search, Plus } from 'lucide-react';
 
 export default function UsersIndex({ users = [], roles = [] }) {
@@ -113,7 +113,12 @@ export default function UsersIndex({ users = [], roles = [] }) {
                                                 <div className="w-9 h-9 rounded-xl bg-[#0a1727] border border-[#21a5e7]/30 flex items-center justify-center text-[#2bd2f2]">
                                                     <User className="w-4 h-4"/>
                                                 </div>
-                                                <span>{user.name}</span>
+                                                <Link
+                                                    href={route('profile.visitor', user.id)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold text-sm text-[#2bd2f2] hover:text-white hover:bg-[#102238] transition"
+                                                >
+                                                    {user.name}
+                                                </Link>
                                             </td>
                                             <td className="py-4 px-6 text-slate-300">{user.email}</td>
                                             <td className="py-4 px-6">

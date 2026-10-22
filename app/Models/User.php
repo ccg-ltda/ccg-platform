@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'operacion', 'company_id', 'status', 'password', 'email_verified_at', 'remember_token'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'operacion', 'company_id', 'status', 'password', 'email_verified_at', 'remember_token', 'plan_type', 'subscription_status', 'subscription_expires_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -22,6 +22,11 @@ class User extends Authenticatable
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function deals()
+    {
+        return $this->hasMany(Deal::class);
     }
 
     protected static function booted(): void
@@ -35,6 +40,8 @@ class User extends Authenticatable
             }
             if ($user->operacion === 'superadmin') {
                 $user->status = 'aprobado';
+                $user->plan_type = 'vip';
+                $user->subscription_status = 'active';
             }
         });
 
@@ -61,6 +68,11 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->hasRole('superadmin') || $this->operacion === 'superadmin' || $this->roles->pluck('name')->contains('superadmin');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin') && !$this->isSuperAdmin();
     }
 
     public function scopeForCompany($query, $companyId)

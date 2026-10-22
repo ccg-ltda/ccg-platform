@@ -7,19 +7,23 @@ export default function QuotationsIndex({ auth, quotations = [], kpis = {} }) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-    // Valores KPI por defecto
-    const openCount = kpis?.open_count ?? 2;
-    const openValue = kpis?.open_value ?? '$47.600.000 COP';
-    const acceptedCount = kpis?.accepted_count ?? 1;
-    const conversionRate = kpis?.conversion_rate ?? '42%';
+    // Valores KPI dinámicos
+    const openCount = kpis?.open_count ?? 0;
+    const openValue = kpis?.open_value ?? '$0 COP';
+    const acceptedCount = kpis?.accepted_count ?? 0;
+    const conversionRate = kpis?.conversion_rate ?? '0%';
 
-    // Listado fallback si no llegan datos del backend
-    const quotationList = Array.isArray(quotations) && quotations.length > 0 ? quotations : [
-        { id: 1, code: 'COT-2026-014', client: 'María López', company: 'Retail Commerce', product: 'Suscripción empresarial', date: '2026-08-10', total: '$19.040.000 COP', status: 'Enviada' },
-        { id: 2, code: 'COT-2026-013', client: 'Carlos Díaz', company: 'Tech Innovate S.A.', product: 'Servicio de soporte', date: '2026-08-08', total: '$47.481.000 COP', status: 'Aceptada' },
-        { id: 3, code: 'COT-2026-012', client: 'Juan Pérez', company: 'Soluciones Digitales', product: 'Consultoría estratégica', date: '2026-08-06', total: '$28.560.000 COP', status: 'Borrador' },
-        { id: 4, code: 'COT-2026-011', client: 'Ana Silva', company: 'E-Commerce Global', product: 'Equipos y suministros', date: '2026-08-03', total: '$33.320.000 COP', status: 'Rechazada' },
-    ];
+    // Filtrado funcional de la lista de cotizaciones
+    const filteredQuotations = quotations.filter(item => {
+        const matchesSearch = 
+            item.code.toLowerCase().includes(search.toLowerCase()) ||
+            item.client.toLowerCase().includes(search.toLowerCase()) ||
+            item.company.toLowerCase().includes(search.toLowerCase());
+        
+        const matchesStatus = statusFilter === '' || item.status === statusFilter;
+        
+        return matchesSearch && matchesStatus;
+    });
 
     const getBadgeStyle = (status) => {
         switch (status) {
@@ -79,37 +83,47 @@ export default function QuotationsIndex({ auth, quotations = [], kpis = {} }) {
                             <option value="Rechazada">Rechazada</option>
                         </select>
                     </div>
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-                            <tr>
-                                <th className="p-4">COTIZACIÓN</th>
-                                <th className="p-4">CLIENTE / EMPRESA</th>
-                                <th className="p-4">PRODUCTO O SERVICIO</th>
-                                <th className="p-4">FECHA</th>
-                                <th className="p-4">TOTAL</th>
-                                <th className="p-4">ESTADO</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {quotationList.map((item) => (
-                                <tr key={item.id} className="hover:bg-slate-50">
-                                    <td className="p-4 font-semibold text-slate-800">{item.code}</td>
-                                    <td className="p-4">
-                                        <div className="font-medium text-slate-900">{item.client}</div>
-                                        <div className="text-xs text-slate-400">{item.company}</div>
-                                    </td>
-                                    <td className="p-4 text-slate-600">{item.product}</td>
-                                    <td className="p-4 text-slate-500">{item.date}</td>
-                                    <td className="p-4 font-bold text-slate-900">{item.total}</td>
-                                    <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getBadgeStyle(item.status)}`}>
-                                            {item.status}
-                                        </span>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th className="p-4 text-xs">COTIZACIÓN</th>
+                                    <th className="p-4 text-xs">CLIENTE / EMPRESA</th>
+                                    <th className="p-4 text-xs">PRODUCTO O SERVICIO</th>
+                                    <th className="p-4 text-xs text-center">FECHA</th>
+                                    <th className="p-4 text-xs text-right">TOTAL</th>
+                                    <th className="p-4 text-xs text-center">ESTADO</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredQuotations.length > 0 ? (
+                                    filteredQuotations.map((item) => (
+                                        <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="p-4 font-semibold text-slate-800">{item.code}</td>
+                                            <td className="p-4">
+                                                <div className="font-medium text-slate-900">{item.client}</div>
+                                                <div className="text-xs text-slate-400">{item.company}</div>
+                                            </td>
+                                            <td className="p-4 text-slate-600 max-w-xs truncate">{item.product}</td>
+                                            <td className="p-4 text-slate-500 text-center whitespace-nowrap">{item.date}</td>
+                                            <td className="p-4 font-bold text-slate-900 text-right">{item.total_formatted}</td>
+                                            <td className="p-4 text-center">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-bold border inline-block min-w-[85px] ${getBadgeStyle(item.status)}`}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="6" className="p-8 text-center text-slate-400 italic">
+                                            No se encontraron cotizaciones con los criterios seleccionados.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

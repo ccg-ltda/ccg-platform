@@ -54,6 +54,20 @@ class HandleInertiaRequests extends Middleware
 
         $companies = ($user && $user->isSuperAdmin()) ? Company::where('status', 'activo')->get(['id', 'name', 'project']) : [];
 
+        $notifications = collect();
+        $isSuperAdmin = $user && $user->isSuperAdmin();
+
+        try {
+            if ($user) {
+                $notifications = $user->notifications()
+                    ->when(!$isSuperAdmin, fn ($q) => $q->where('data->company_id', $user->company_id))
+                    ->limit(20)
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            $notifications = collect();
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -69,6 +83,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'activeCompany' => $activeCompany,
             'companies' => $companies,
+            'notifications' => $notifications,
         ];
     }
 }

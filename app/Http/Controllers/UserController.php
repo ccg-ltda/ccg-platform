@@ -13,52 +13,13 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $authUser = auth()->user();
-        $activeCompanyId = session('active_company_id');
-
-        $query = User::query()->with(['roles', 'company']);
-
-        if ($authUser->isSuperAdmin()) {
-            if ($activeCompanyId) {
-                $query->where('company_id', $activeCompanyId);
-            }
-        } else {
-            $query->forCompany($authUser->company_id);
-        }
-
-        $users = $query->latest()->get();
-        $roles = Role::all(['id', 'name']);
-        $companies = Company::where('status', 'activo')->get(['id', 'name']);
-
-        return Inertia::render('Users/Index', [
-            'users' => $users->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'username' => $user->username,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'operacion' => $user->operacion,
-                    'company_id' => $user->company_id,
-                    'company_name' => $user->company ? $user->company->name : null,
-                    'status' => $user->status ?? 'aprobado',
-                    'roles' => $user->roles->pluck('name'),
-                    'created_at' => $user->created_at ? $user->created_at->format('d/m/Y') : '',
-                ];
-            }),
-            'roles' => $roles,
-            'companies' => $companies,
-            'auth' => [
-                'user' => $authUser,
-            ],
-        ]);
+        return redirect()->route('settings.index', array_merge(['tab' => 'users'], $request->all()));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        if (!auth()->user()->hasRole('superadmin')) {
-            abort(403, 'No autorizado');
-        }
+        $authUser = auth()->user();
+        $isSuperAdmin = $authUser->isSuperAdmin();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -69,6 +30,13 @@ class UserController extends Controller
             'operacion' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
         ]);
+
+        if (!$isSuperAdmin) {
+            if (strtolower($validated['role']) === 'superadmin') {
+                abort(403, 'No autorizado para asignar rol de superadmin');
+            }
+            $validated['company_id'] = $authUser->company_id;
+        }
 
         $user = User::create([
             'name' => $validated['name'],
@@ -82,13 +50,15 @@ class UserController extends Controller
 
         $user->assignRole($validated['role']);
 
-        return redirect()->route('users.index');
+        return redirect()->route('settings.index', ['tab' => 'users']);
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
         $authUser = auth()->user();
-        if (!$authUser->isSuperAdmin() && $user->company_id !== $authUser->company_id) {
+        $isSuperAdmin = $authUser->isSuperAdmin();
+
+        if (!$isSuperAdmin && $user->company_id !== $authUser->company_id) {
             abort(403, 'No autorizado');
         }
 
@@ -102,6 +72,13 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
         ]);
 
+        if (!$isSuperAdmin) {
+            if (strtolower($validated['role']) === 'superadmin') {
+                abort(403, 'No autorizado para asignar rol de superadmin');
+            }
+            $validated['company_id'] = $authUser->company_id;
+        }
+
         $user->update([
             'name' => $validated['name'],
             'username' => $validated['username'],
@@ -113,7 +90,7 @@ class UserController extends Controller
 
         $user->syncRoles([$validated['role']]);
 
-        return redirect()->route('users.index');
+        return redirect()->route('settings.index', ['tab' => 'users']);
     }
 
     public function toggleStatus(User $user): RedirectResponse
@@ -126,7 +103,7 @@ class UserController extends Controller
         $newStatus = $user->status === 'aprobado' ? 'inhabilitado' : 'aprobado';
         $user->update(['status' => $newStatus]);
 
-        return redirect()->route('users.index');
+        return redirect()->route('settings.index', ['tab' => 'users']);
     }
 
     public function destroy(Request $request, User $user): RedirectResponse
@@ -139,6 +116,6 @@ class UserController extends Controller
             $user->delete();
         }
 
-        return redirect()->route('users.index');
+        return redirect()->route('settings.index', ['tab' => 'users']);
     }
 }

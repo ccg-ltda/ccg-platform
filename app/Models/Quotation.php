@@ -13,10 +13,12 @@ class Quotation extends Model
         'code',
         'user_id',
         'company_id',
+        'deal_id',
         'product_service',
         'date',
         'total',
         'status',
+        'observation',
     ];
 
     protected $casts = [
@@ -32,5 +34,10 @@ class Quotation extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function deal()
+    {
+        return $this->belongsTo(Deal::class);
     }
 }
